@@ -1,0 +1,15 @@
+# Servicio systemd para ejecutar la aplicación con Gunicorn en Ubuntu Server
+# Copiar a /etc/systemd/system/asistencia.service y ejecutar: systemctl enable --now asistencia
+[Unit]
+Description=Sistema Web de Control de Asistencia (Flask + Gunicorn)
+After=network.target mysql.service
+
+[Service]
+User=www-data
+WorkingDirectory=/opt/control-asistencia
+EnvironmentFile=/opt/control-asistencia/.env
+ExecStart=/opt/control-asistencia/venv/bin/gunicorn -c config/gunicorn.conf.py wsgi:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
