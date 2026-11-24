@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import kpi, badge, vacio %}
+{% block titulo %}Mi asistencia{% endblock %}
+{% block encabezado %}Mi asistencia{% endblock %}
+{% block contenido %}
+<form class="card card-body filtros mb-3" method="get"><div class="row g-2 align-items-end">
+  <div class="col-md-4"><label class="form-label">Desde</label><input class="form-control" type="date" name="desde" value="{{ desde }}"></div>
+  <div class="col-md-4"><label class="form-label">Hasta</label><input class="form-control" type="date" name="hasta" value="{{ hasta }}"></div>
+  <div class="col-md-4 d-grid"><button class="btn btn-primary">Consultar</button></div></div></form>
+{% if datos %}
+{% set ultimo = datos.bonos[0] if datos.bonos else None %}
+<div class="row row-cols-2 row-cols-lg-4 g-3 mb-3">
+  {{ kpi(datos.resumen.dias, 'Días con marcas', 'calendar-check', 'primary') }}{{ kpi(datos.resumen.tardanzas, 'Tardanzas', 'alarm', 'warning') }}
+  {{ kpi(datos.resumen.faltas, 'Faltas', 'person-x', 'danger') }}{{ kpi((ultimo.monto|soles) if ultimo else '—', ('Bono ' ~ '%02d'|format(ultimo.liquidacion.mes) ~ '/' ~ ultimo.liquidacion.anio) if ultimo else 'Sin bonos liquidados', 'award', 'success') }}
+</div>
+<div class="row g-3">
+  <div class="col-xl-7"><div class="card"><div class="card-header">Marcas</div><div class="table-responsive" style="max-height: 460px"><table class="table table-sm align-middle">
+    <thead><tr><th>Fecha y hora</th><th>Tipo</th><th>Origen</th><th>Estado</th></tr></thead>
+    <tbody>{% for mk in datos.marcas|reverse %}<tr><td>{{ mk.fecha_hora.strftime('%d/%m/%Y %H:%M:%S') }}</td><td>{{ mk.tipo|titulo }}</td><td>{{ badge(mk.origen) }}</td><td>{{ badge(mk.estado) }}</td></tr>
+    {% else %}<tr><td colspan="4">{{ vacio('No hay registros para el periodo seleccionado.') }}</td></tr>{% endfor %}</tbody></table></div></div></div>
+  <div class="col-xl-5"><div class="card"><div class="card-header">Incidencias</div><ul class="list-group list-group-flush">
+    {% for i in datos.inconsistencias %}<li class="list-group-item">
+      <div class="d-flex justify-content-between"><span>{{ i.fecha|f }} · {{ badge(i.tipo) }} {{ (i.minutos ~ ' min') if i.minutos }}</span>{{ badge(i.estado) }}</div>
+      {% if i.estado in ['DETECTADA', 'POR_JUSTIFICAR'] %}<form method="post" class="d-flex gap-1 mt-2"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="id_inconsistencia" value="{{ i.id_inconsistencia }}"><input class="form-control form-control-sm" name="motivo" placeholder="Justificación…">
+        <button class="btn btn-sm btn-outline-primary">Enviar</button></form>{% endif %}</li>
+    {% else %}<li class="list-group-item">{{ vacio('Sin incidencias.') }}</li>{% endfor %}</ul></div></div>
+</div>
+{% endif %}
+{% endblock %}

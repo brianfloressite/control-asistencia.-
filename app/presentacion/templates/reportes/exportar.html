@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import vacio %}
+{% block titulo %}Exportar reportes{% endblock %}
+{% block encabezado %}Exportar reportes{% endblock %}
+{% block contenido %}
+<div class="row g-3">
+  <div class="col-xl-4"><form class="card" method="post"><div class="card-header">Configurar reporte</div><div class="card-body">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="form-label">Tipo de reporte</label>
+    {% for k, v in tipos.items() %}<label class="border rounded p-2 mb-2 d-flex gap-2 align-items-center w-100">
+      <input class="form-check-input mt-0" type="radio" name="tipo" value="{{ k }}" {{ 'checked' if tipo == k }} onchange="location='?tipo={{ k }}'"> {{ v }}</label>{% endfor %}
+    <div class="row g-2 mt-1"><div class="col"><label class="form-label">Desde</label><input class="form-control" type="date" name="desde" value="{{ desde }}"></div>
+      <div class="col"><label class="form-label">Hasta</label><input class="form-control" type="date" name="hasta" value="{{ hasta }}"></div></div>
+    <label class="form-label mt-2">Área</label><select class="form-select" name="area"><option value="">Todas</option>{% for a in areas %}<option value="{{ a.id_area }}">{{ a.nombre }}</option>{% endfor %}</select>
+    <label class="form-label mt-2">Colaborador</label><select class="form-select" name="colaborador"><option value="">Todos</option>{% for c in colaboradores %}<option value="{{ c.id_colaborador }}">{{ c.nombre_completo }}</option>{% endfor %}</select>
+    <label class="form-label mt-3">Formato</label>
+    <div class="d-flex gap-2"><button class="btn btn-danger flex-fill" name="formato" value="pdf"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+      <button class="btn btn-success flex-fill" name="formato" value="excel"><i class="bi bi-file-earmark-excel"></i> Excel</button></div>
+  </div></form></div>
+  <div class="col-xl-8"><div class="card"><div class="card-header d-flex justify-content-between">Vista previa: {{ tipos[tipo] }}<span class="text-muted small">{{ total }} registro(s)</span></div>
+    <div class="table-responsive"><table class="table table-sm table-striped align-middle">
+      <thead><tr>{% for c in cab %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for f in filas %}<tr>{% for v in f %}<td>{{ v }}</td>{% endfor %}</tr>{% else %}<tr><td colspan="{{ cab|length or 1 }}">{{ vacio('No hay datos para los filtros seleccionados.') }}</td></tr>{% endfor %}</tbody>
+    </table></div>{% if total > filas|length %}<div class="card-body small text-muted">Se muestran los primeros {{ filas|length }}; el archivo incluye todos.</div>{% endif %}</div></div>
+</div>
+{% endblock %}

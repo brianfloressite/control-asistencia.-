@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block titulo %}Usuarios y perfiles{% endblock %}
+{% block encabezado %}Usuarios y perfiles{% endblock %}
+{% block contenido %}
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">Usuarios registrados
+        <a class="btn btn-sm btn-primary" href="{{ url_for('auth.usuarios') }}"><i class="bi bi-plus-lg"></i> Nuevo usuario</a></div>
+      <div class="table-responsive"><table class="table table-hover align-middle">
+        <thead><tr><th>Usuario</th><th>Colaborador</th><th>Perfil</th><th>Estado</th><th>Último acceso</th><th class="text-end">Acciones</th></tr></thead>
+        <tbody>
+        {% for u in usuarios %}
+          <tr><td class="fw-semibold">{{ u.username }}</td><td>{{ u.colaborador.nombre_completo if u.colaborador else '—' }}</td>
+            <td>{{ u.perfil.nombre }}</td><td>{{ badge(u.estado) }}</td><td>{{ u.ultimo_acceso|fh }}</td>
+            <td class="text-end text-nowrap">
+              <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('auth.usuarios', id_usuario=u.id_usuario) }}"><i class="bi bi-pencil"></i></a>
+              <form class="d-inline" method="post" action="{{ url_for('auth.estado_usuario', id_usuario=u.id_usuario) }}"
+                    data-confirmar="¿Cambiar el estado de {{ u.username }}?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="estado" value="{{ 'INACTIVO' if u.estado == 'ACTIVO' else 'ACTIVO' }}">
+                <button class="btn btn-sm btn-outline-{{ 'danger' if u.estado == 'ACTIVO' else 'success' }}">{{ 'Desactivar' if u.estado == 'ACTIVO' else 'Activar' }}</button>
+              </form></td></tr>
+        {% endfor %}
+        </tbody></table></div>
+    </div>
+  </div>
+  <div class="col-xl-4">
+    <div class="card"><div class="card-header">{{ 'Editar usuario' if editar else 'Nuevo usuario' }}</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('auth.usuarios', id_usuario=editar.id_usuario) if editar else url_for('auth.usuarios') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-2"><label class="form-label">Colaborador asociado</label>
+            <select class="form-select" name="id_colaborador"><option value="">— Sin colaborador —</option>
+              {% for c in colaboradores %}<option value="{{ c.id_colaborador }}" {{ 'selected' if editar and editar.id_colaborador == c.id_colaborador }}>{{ c.nombre_completo }}</option>{% endfor %}
+            </select></div>
+          <div class="mb-2"><label class="form-label">Nombre de usuario</label>
+            <input class="form-control" name="username" required minlength="4" value="{{ editar.username if editar else request.form.username }}"></div>
+          <div class="mb-2"><label class="form-label">{{ 'Nueva contraseña (opcional)' if editar else 'Contraseña inicial' }}</label>
+            <input class="form-control" type="password" name="password" minlength="8" {{ '' if editar else 'required' }}></div>
+          <div class="mb-2"><label class="form-label">Perfil</label>
+            <select class="form-select" name="id_perfil" required>
+              {% for p in perfiles %}<option value="{{ p.id_perfil }}" {{ 'selected' if editar and editar.id_perfil == p.id_perfil }}>{{ p.nombre }}</option>{% endfor %}
+            </select></div>
+          <div class="mb-3"><label class="form-label">Estado</label>
+            <select class="form-select" name="estado">{% for e in ['ACTIVO','INACTIVO','BLOQUEADO'] %}<option {{ 'selected' if editar and editar.estado == e }}>{{ e }}</option>{% endfor %}</select></div>
+          <button class="btn btn-primary">Guardar</button>
+          {% if editar %}<a class="btn btn-outline-secondary" href="{{ url_for('auth.usuarios') }}">Cancelar</a>{% endif %}
+        </form>
+      </div></div>
+  </div>
+</div>
+{% endblock %}

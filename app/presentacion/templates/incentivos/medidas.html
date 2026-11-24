@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, vacio %}
+{% block titulo %}Medidas disciplinarias{% endblock %}
+{% block encabezado %}Medidas disciplinarias{% endblock %}
+{% block contenido %}
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="card mb-3"><div class="card-header">Alertas activas</div><div class="table-responsive"><table class="table table-hover align-middle">
+      <thead><tr><th>Colaborador</th><th>Motivo</th><th>Cantidad</th><th>Generada</th><th class="text-end">Acciones</th></tr></thead>
+      <tbody>{% for a in alertas %}<tr class="{{ 'table-primary' if sel == a.id_alerta }}"><td class="fw-semibold">{{ a.colaborador.nombre_completo }}</td>
+        <td>{{ badge('FALTA' if a.tipo == 'FALTAS' else 'TARDANZA')|replace('Falta','Faltas reiteradas')|replace('Tardanza','Tardanzas reiteradas') }}</td>
+        <td>{{ a.cantidad }}</td><td>{{ a.fecha_generacion|f }}</td>
+        <td class="text-end text-nowrap"><a class="btn btn-sm btn-primary" href="?alerta={{ a.id_alerta }}">Registrar medida</a>
+          <form class="d-inline" method="post" data-confirmar="¿Descartar esta alerta?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="accion" value="descartar"><input type="hidden" name="id_alerta" value="{{ a.id_alerta }}">
+            <input type="hidden" name="motivo" value="Revisado por RR. HH.: sin mérito para sanción"><button class="btn btn-sm btn-outline-secondary">Descartar</button></form></td></tr>
+      {% else %}<tr><td colspan="5">{{ vacio('No hay alertas activas.') }}</td></tr>{% endfor %}</tbody></table></div></div>
+    <div class="card"><div class="card-header">Medidas registradas</div><div class="table-responsive"><table class="table table-sm align-middle">
+      <thead><tr><th>Fecha</th><th>Colaborador</th><th>Medida</th><th>Estado</th><th>Carta</th></tr></thead>
+      <tbody>{% for md in medidas %}<tr><td>{{ md.fecha|f }}</td><td>{{ md.colaborador.nombre_completo }}</td><td>{{ tipos[md.tipo] }}</td><td>{{ badge(md.estado) }}</td>
+        <td>{% if md.ruta_carta_pdf %}<a class="btn btn-sm btn-outline-danger" href="{{ url_for('incentivos.carta', id_medida=md.id_medida) }}"><i class="bi bi-file-pdf"></i> PDF</a>{% else %}—{% endif %}</td></tr>
+      {% else %}<tr><td colspan="5">{{ vacio('Sin medidas registradas.') }}</td></tr>{% endfor %}</tbody></table></div></div>
+  </div>
+  <div class="col-xl-4"><div class="card"><div class="card-header">Registrar medida</div><div class="card-body">
+    <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="form-label">Alerta</label><select class="form-select mb-2" name="id_alerta" required>
+        {% for a in alertas %}<option value="{{ a.id_alerta }}" {{ 'selected' if sel == a.id_alerta }}>{{ a.colaborador.nombre_completo }} · {{ a.cantidad }} {{ a.tipo|lower }}</option>{% endfor %}</select>
+      <label class="form-label">Tipo de medida</label><select class="form-select mb-2" name="tipo">{% for k, v in tipos.items() %}<option value="{{ k }}" {{ 'selected' if k == 'AMONESTACION_ESCRITA' }}>{{ v }}</option>{% endfor %}</select>
+      <label class="form-label">Sustento</label><textarea class="form-control mb-2" name="sustento" rows="5" required minlength="10"
+        placeholder="Récord de incidencias del periodo y descripción de la falta…"></textarea>
+      <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="emitir_pdf" id="pdf" checked><label class="form-check-label" for="pdf">Emitir carta de amonestación en PDF</label></div>
+      <button class="btn btn-primary w-100" {{ 'disabled' if not alertas }}>Registrar medida</button>
+    </form></div></div></div>
+</div>
+{% endblock %}

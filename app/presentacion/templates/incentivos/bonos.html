@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import kpi, badge, vacio %}
+{% block titulo %}Bonos de puntualidad{% endblock %}
+{% block encabezado %}Bonos de puntualidad{% endblock %}
+{% block contenido %}
+<form class="card card-body filtros mb-3" method="post"><div class="row g-2 align-items-end">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="col-md-3"><label class="form-label">Mes</label><select class="form-select" name="mes">{% for n in meses %}<option value="{{ loop.index }}" {{ 'selected' if loop.index == mes }}>{{ n }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><label class="form-label">Año</label><input class="form-control" type="number" name="anio" value="{{ anio }}"></div>
+  <div class="col-md-4"><label class="form-label">Área</label><select class="form-select" name="area"><option value="">Todas</option>{% for a in areas %}<option value="{{ a.id_area }}">{{ a.nombre }}</option>{% endfor %}</select></div>
+  <div class="col-md-3 d-grid"><button class="btn btn-primary" name="accion" value="calcular"><i class="bi bi-calculator"></i> Calcular bonos</button></div>
+</div></form>
+{% for a in avisos %}<div class="alert alert-warning py-2"><i class="bi bi-exclamation-triangle"></i> {{ a }}</div>{% endfor %}
+{% if liq %}
+{% set aptos = liq.detalles|selectattr('apto')|list %}
+<div class="row row-cols-2 row-cols-lg-4 g-3 mb-3">
+  {{ kpi(aptos|length, 'Colaboradores aptos', 'award', 'success') }}{{ kpi(liq.detalles|length - aptos|length, 'No aptos', 'x-circle', 'danger') }}
+  {{ kpi(aptos|sum(attribute='monto')|soles, 'Monto total', 'cash-stack', 'primary') }}{{ kpi(liq.estado|titulo, 'Liquidación ' ~ '%02d'|format(liq.mes) ~ '/' ~ liq.anio, 'clipboard-check', 'warning' if liq.estado == 'BORRADOR' else 'secondary') }}
+</div>
+<div class="card"><div class="table-responsive"><table class="table table-hover align-middle">
+  <thead><tr><th>Colaborador</th><th>Área</th><th>Tardanzas</th><th>Faltas</th><th>Abandonos</th><th>Resultado</th><th class="text-end">Monto</th></tr></thead>
+  <tbody>{% for d in liq.detalles|sort(attribute='colaborador.apellidos') %}<tr><td class="fw-semibold">{{ d.colaborador.nombre_completo }}</td><td>{{ d.colaborador.area.nombre }}</td>
+    <td>{{ d.tardanzas }}</td><td>{{ d.faltas }}</td><td>{{ d.abandonos }}</td>
+    <td><span class="badge text-bg-{{ 'success' if d.apto else 'danger' }}">{{ 'Apto' if d.apto else 'No apto' }}</span></td><td class="text-end">{{ d.monto|soles }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% if liq.estado == 'BORRADOR' %}<div class="card-body border-top text-end">
+  <form method="post" data-confirmar="¿Cerrar la liquidación? Ya no podrá recalcularse.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="accion" value="cerrar">
+    <input type="hidden" name="id_liquidacion" value="{{ liq.id_liquidacion }}"><input type="hidden" name="anio" value="{{ anio }}"><input type="hidden" name="mes" value="{{ mes }}">
+    <button class="btn btn-primary"><i class="bi bi-lock"></i> Cerrar liquidación</button></form></div>{% endif %}
+</div>
+{% else %}<div class="card card-body">{{ vacio('Seleccione el periodo y presione «Calcular bonos».') }}</div>{% endif %}
+{% endblock %}

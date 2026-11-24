@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, vacio %}
+{% block titulo %}Sincronización biométrica{% endblock %}
+{% block encabezado %}Sincronización biométrica{% endblock %}
+{% block contenido %}
+<div class="row g-3 mb-3">
+  {% for r in relojes %}
+  <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+    <div class="d-flex justify-content-between"><h2 class="h6 mb-1"><i class="bi bi-fingerprint"></i> {{ r.nombre }}</h2>{{ badge('ACTIVO' if r.activo else 'INACTIVO') }}</div>
+    <p class="text-muted small mb-3">ZKTeco · {{ r.ip }}:{{ r.puerto }} · sincronización automática cada {{ config.SYNC_MINUTES }} min
+      ({{ 'activa' if config.SCHEDULER_ENABLED else 'desactivada en este entorno' }})</p>
+    <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id_reloj" value="{{ r.id_reloj }}">
+      <button class="btn btn-primary"><i class="bi bi-arrow-repeat"></i> Sincronizar ahora</button></form>
+  </div></div></div>
+  {% endfor %}
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header">Fallas reportadas recientemente</div>
+    <ul class="list-group list-group-flush">{% for f in fallas %}
+      <li class="list-group-item d-flex justify-content-between"><span>#{{ f.id_reporte }} · {{ f.tipo_falla|titulo }} · {{ f.fecha_hora|fh }}<br>
+        <small class="text-muted">{{ f.descripcion or 'Sin descripción' }} · {{ f.colaboradores|length }} reporte(s)</small></span>{{ badge(f.estado) }}</li>
+    {% else %}<li class="list-group-item">{{ vacio('Sin fallas reportadas.') }}</li>{% endfor %}</ul></div></div>
+</div>
+<div class="card"><div class="card-header">Registro de sincronizaciones</div>
+  <div class="table-responsive"><table class="table align-middle">
+    <thead><tr><th>Inicio</th><th>Reloj</th><th>Tipo</th><th>Usuario</th><th>Marcas nuevas</th><th>Estado</th><th>Mensaje</th></tr></thead>
+    <tbody>{% for l in logs %}<tr><td>{{ l.inicio|fh }}</td><td>{{ l.reloj.nombre }}</td><td>{{ l.tipo|titulo }}</td><td>{{ l.usuario.username if l.usuario else 'Planificador' }}</td>
+      <td>{{ l.marcas_descargadas }}</td><td>{{ badge(l.estado) }}</td><td class="small text-muted">{{ l.mensaje or '—' }}</td></tr>
+    {% else %}<tr><td colspan="7">{{ vacio('Aún no hay sincronizaciones.') }}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

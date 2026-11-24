@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titulo %}Colaborador{% endblock %}
+{% block encabezado %}{{ 'Editar colaborador' if c else 'Nuevo colaborador' }}{% endblock %}
+{% block contenido %}
+{% set f = request.form if request.method == 'POST' else {} %}
+<div class="card" style="max-width: 860px"><div class="card-body">
+<form method="post" class="row g-3">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="col-md-3"><label class="form-label">DNI</label><input class="form-control" name="dni" maxlength="8" pattern="\d{8}" required value="{{ f.dni or (c.dni if c else '') }}"></div>
+  <div class="col-md-4"><label class="form-label">Nombres</label><input class="form-control" name="nombres" required value="{{ f.nombres or (c.nombres if c else '') }}"></div>
+  <div class="col-md-5"><label class="form-label">Apellidos</label><input class="form-control" name="apellidos" required value="{{ f.apellidos or (c.apellidos if c else '') }}"></div>
+  <div class="col-md-4"><label class="form-label">Área</label><select class="form-select" name="id_area" required>
+    {% for a in areas %}<option value="{{ a.id_area }}" {{ 'selected' if c and c.id_area == a.id_area }}>{{ a.nombre }}</option>{% endfor %}</select></div>
+  <div class="col-md-4"><label class="form-label">Cargo</label><select class="form-select" name="id_cargo" required>
+    {% for x in cargos %}<option value="{{ x.id_cargo }}" {{ 'selected' if c and c.id_cargo == x.id_cargo }}>{{ x.nombre }}</option>{% endfor %}</select></div>
+  <div class="col-md-4"><label class="form-label">Supervisor</label><select class="form-select" name="id_supervisor"><option value="">— Ninguno —</option>
+    {% for s in supervisores %}{% if not c or s.id_colaborador != c.id_colaborador %}<option value="{{ s.id_colaborador }}" {{ 'selected' if c and c.id_supervisor == s.id_colaborador }}>{{ s.nombre_completo }}</option>{% endif %}{% endfor %}</select></div>
+  <div class="col-md-4"><label class="form-label">Código biométrico</label><input class="form-control" name="codigo_biometrico" required value="{{ f.codigo_biometrico or (c.codigo_biometrico if c else '') }}">
+    <div class="form-text">Debe coincidir con el ID del usuario en el reloj ZKTeco.</div></div>
+  <div class="col-md-4"><label class="form-label">Fecha de ingreso</label><input class="form-control" type="date" name="fecha_ingreso" required value="{{ f.fecha_ingreso or (c.fecha_ingreso if c else hoy) }}"></div>
+  <div class="col-12"><button class="btn btn-primary">Guardar</button> <a class="btn btn-outline-secondary" href="{{ url_for('personal.colaboradores') }}">Cancelar</a></div>
+</form></div></div>
+{% endblock %}

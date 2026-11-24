@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import vacio %}
+{% block titulo %}Validaciones{% endblock %}
+{% block encabezado %}Validaciones pendientes{% endblock %}
+{% block contenido %}
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link {{ 'active' if tab == 'marcas' }}" href="?tab=marcas">Marcas de contingencia <span class="badge text-bg-warning">{{ marcas|length }}</span></a></li>
+  <li class="nav-item"><a class="nav-link {{ 'active' if tab == 'justificaciones' }}" href="?tab=justificaciones">Justificaciones <span class="badge text-bg-warning">{{ justificaciones|length }}</span></a></li>
+</ul>
+{% if tab == 'marcas' %}
+<form method="post" class="card">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="tab" value="marcas">
+  <div class="table-responsive"><table class="table table-hover align-middle">
+    <thead><tr><th><input class="form-check-input" type="checkbox" id="seleccionar-todos"></th><th>Colaborador</th><th>Fecha y hora</th><th>Tipo</th><th>Motivo</th><th>Reporte de falla</th><th>Equipo</th><th>IP</th></tr></thead>
+    <tbody>{% for mk in marcas %}
+      <tr><td><input class="form-check-input" type="checkbox" name="ids" value="{{ mk.id_marca }}"></td><td class="fw-semibold">{{ mk.colaborador.nombre_completo }}</td>
+        <td>{{ mk.fecha_hora|fh }}</td><td>{{ mk.tipo|titulo }}</td><td>{{ mk.motivo }}</td>
+        <td>{{ ('#' ~ mk.reporte.id_reporte ~ ' ' ~ mk.reporte.tipo_falla|titulo) if mk.reporte else '—' }}</td><td>{{ mk.dispositivo.nombre if mk.dispositivo else '—' }}</td>
+        <td class="text-muted small">{{ mk.ip_origen or '—' }}</td></tr>
+    {% else %}<tr><td colspan="8">{{ vacio('No hay marcas pendientes.') }}</td></tr>{% endfor %}</tbody></table></div>
+  {% if marcas %}<div class="card-body border-top row g-2 align-items-end">
+    <div class="col-md-7"><label class="form-label small">Observación (obligatoria al rechazar)</label><input class="form-control" name="observacion" placeholder="Escriba el motivo…"></div>
+    <div class="col-md-5 text-end"><button class="btn btn-outline-danger" name="decision" value="RECHAZADA">Rechazar seleccionadas</button>
+      <button class="btn btn-primary" name="decision" value="APROBADA"><i class="bi bi-check2-all"></i> Aprobar seleccionadas</button></div>
+  </div>{% endif %}
+</form>
+{% else %}
+<div class="card"><div class="table-responsive"><table class="table align-middle">
+  <thead><tr><th>Colaborador</th><th>Inconsistencia</th><th>Motivo presentado</th><th>Registrada</th><th class="w-25">Resolver</th></tr></thead>
+  <tbody>{% for j in justificaciones %}
+    <tr><td class="fw-semibold">{{ j.inconsistencia.colaborador.nombre_completo }}</td><td>{{ j.inconsistencia.tipo|titulo }} · {{ j.inconsistencia.fecha|f }}</td>
+      <td>{{ j.motivo }}</td><td>{{ j.fecha_registro|fh }}</td>
+      <td><form method="post" class="d-flex gap-1"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="tab" value="justificaciones"><input type="hidden" name="id_justificacion" value="{{ j.id_justificacion }}">
+        <input class="form-control form-control-sm" name="observacion" placeholder="Observación">
+        <button class="btn btn-sm btn-success" name="decision" value="APROBADA"><i class="bi bi-check"></i></button>
+        <button class="btn btn-sm btn-danger" name="decision" value="RECHAZADA"><i class="bi bi-x"></i></button></form></td></tr>
+  {% else %}<tr><td colspan="5">{{ vacio('No hay justificaciones pendientes.') }}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endif %}
+{% endblock %}

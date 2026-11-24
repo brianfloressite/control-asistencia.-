@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import kpi %}
+{% block titulo %}Dashboard{% endblock %}
+{% block encabezado %}Dashboard de indicadores{% endblock %}
+{% block contenido %}
+<form class="card card-body filtros mb-3" method="get"><div class="row g-2 align-items-end">
+  <div class="col-md-3"><label class="form-label">Mes</label><input class="form-control" type="number" min="1" max="12" name="mes" value="{{ mes }}"></div>
+  <div class="col-md-3"><label class="form-label">Año</label><input class="form-control" type="number" name="anio" value="{{ anio }}"></div>
+  <div class="col-md-4"><label class="form-label">Área</label><select class="form-select" name="area"><option value="">Todas</option>
+    {% for a in areas %}<option value="{{ a.id_area }}" {{ 'selected' if area == a.id_area }}>{{ a.nombre }}</option>{% endfor %}</select></div>
+  <div class="col-md-2 d-grid"><button class="btn btn-primary">Actualizar</button></div></div></form>
+{% if ind.sin_datos %}<div class="alert alert-info">No hay turnos programados en el periodo: los indicadores se muestran en cero.</div>{% endif %}
+<div class="row row-cols-2 row-cols-lg-5 g-3 mb-3">
+  {{ kpi(ind.puntualidad ~ ' %', 'Puntualidad', 'clock', 'success') }}{{ kpi(ind.ausentismo ~ ' %', 'Ausentismo', 'person-dash', 'danger') }}
+  {{ kpi(ind.guardias ~ ' %', 'Cumplimiento de guardias', 'moon-stars', 'primary') }}{{ kpi(ind.bonos, 'Bonos otorgados', 'award', 'warning') }}
+  {{ kpi(ind.medidas, 'Medidas activas', 'file-earmark-text', 'secondary') }}
+</div>
+<div class="row g-3">
+  <div class="col-xl-7"><div class="card h-100"><div class="card-header">Tendencia de puntualidad por semana</div><div class="card-body"><canvas id="g1" height="140"></canvas></div></div></div>
+  <div class="col-xl-5"><div class="card h-100"><div class="card-header">Ausentismo por área (%)</div><div class="card-body"><canvas id="g2" height="190"></canvas></div></div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chartjs/chart.umd.min.js') }}"></script>
+<script>
+  const semanas = {{ ind.semanas|tojson }}, areas = {{ ind.areas|tojson }};
+  Chart.defaults.font.family = 'system-ui, Segoe UI, sans-serif';
+  new Chart(document.getElementById('g1'), { type: 'line', data: { labels: semanas.map(s => s.etiqueta),
+    datasets: [{ label: '% puntualidad', data: semanas.map(s => s.puntualidad), borderColor: '#2B5797', backgroundColor: 'rgba(43,87,151,.12)', fill: true, tension: .3 }] },
+    options: { animation: false, plugins: { legend: { display: false } }, scales: { y: { suggestedMin: 70, max: 100 } } } });
+  new Chart(document.getElementById('g2'), { type: 'bar', data: { labels: areas.map(a => a.area),
+    datasets: [{ label: '% ausentismo', data: areas.map(a => a.ausentismo), backgroundColor: '#D7263D' }] },
+    options: { animation: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } } });
+</script>
+{% endblock %}

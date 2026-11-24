@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import paginacion, vacio %}
+{% block titulo %}Bitácora{% endblock %}
+{% block encabezado %}Bitácora de auditoría{% endblock %}
+{% block contenido %}
+<form class="card card-body filtros mb-3" method="get">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3"><label class="form-label">Usuario</label><select class="form-select" name="usuario"><option value="">Todos</option>
+      {% for u in usuarios %}<option value="{{ u.id_usuario }}" {{ 'selected' if request.args.usuario == u.id_usuario|string }}>{{ u.username }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><label class="form-label">Acción</label><select class="form-select" name="accion"><option value="">Todas</option>
+      {% for a in acciones %}<option {{ 'selected' if request.args.accion == a }}>{{ a }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><label class="form-label">Desde (fecha inicio)</label><input class="form-control" type="date" name="desde" value="{{ desde }}"></div>
+    <div class="col-md-2"><label class="form-label">Hasta (fecha fin)</label><input class="form-control" type="date" name="hasta" value="{{ hasta }}"></div>
+    <div class="col-md-2 d-grid"><button class="btn btn-primary"><i class="bi bi-funnel"></i> Filtrar</button></div>
+  </div>
+</form>
+<div class="card">
+  <div class="card-header"><i class="bi bi-lock"></i> Registro de solo lectura</div>
+  <div class="table-responsive"><table class="table table-sm table-striped align-middle">
+    <thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Acción</th><th>Módulo</th><th>Detalle</th><th>IP</th></tr></thead>
+    <tbody>
+    {% for b in pag.items %}
+      <tr><td class="text-nowrap">{{ b.fecha_hora|fh }}</td><td>{{ b.usuario.username if b.usuario else 'Sistema' }}</td>
+        <td><span class="badge text-bg-light border">{{ b.accion }}</span></td><td>{{ b.modulo }}</td><td>{{ b.detalle }}</td><td class="text-muted">{{ b.ip or '—' }}</td></tr>
+    {% else %}<tr><td colspan="6">{{ vacio('No se encontraron registros.') }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  <div class="card-body pt-0">{{ paginacion(pag, 'auth.bitacora') }}</div>
+</div>
+{% endblock %}

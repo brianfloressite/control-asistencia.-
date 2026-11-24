@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block titulo %}Equipos autorizados{% endblock %}
+{% block encabezado %}Equipos autorizados para contingencia{% endblock %}
+{% block contenido %}
+<div class="row g-3">
+  <div class="col-lg-8"><div class="card"><div class="card-header">Dispositivos registrados</div>
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th>Nombre</th><th>Tipo</th><th>Identificador</th><th>Estado</th><th></th></tr></thead>
+      <tbody>{% for d in dispositivos %}<tr><td>{{ d.nombre }}</td><td>{{ d.tipo|titulo }}</td><td><code>{{ d.identificador[:12] }}…</code></td>
+        <td>{{ badge('ACTIVO' if d.activo else 'INACTIVO') }}</td>
+        <td class="text-end"><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="accion" value="estado"><input type="hidden" name="id" value="{{ d.id_dispositivo }}">
+          <button class="btn btn-sm btn-outline-secondary">{{ 'Desactivar' if d.activo else 'Activar' }}</button></form></td></tr>{% endfor %}</tbody>
+    </table></div></div></div>
+  <div class="col-lg-4"><div class="card"><div class="card-header">Este equipo</div><div class="card-body">
+    {% if este %}<p class="mb-0"><i class="bi bi-check-circle text-success"></i> Autorizado como <b>{{ este.nombre }}</b>.</p>
+    {% else %}
+    <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="accion" value="registrar_este">
+      <div class="mb-2"><label class="form-label">Nombre del equipo</label><input class="form-control" name="nombre" placeholder="PC recepción" required></div>
+      <div class="mb-3"><label class="form-label">Tipo</label><select class="form-select" name="tipo"><option>PC</option><option>CELULAR</option></select></div>
+      <button class="btn btn-primary w-100"><i class="bi bi-shield-plus"></i> Autorizar este equipo</button>
+      <p class="small text-muted mt-2 mb-0">Abra esta opción desde la PC o el celular corporativo que se usará para marcar.</p>
+    </form>{% endif %}
+  </div></div></div>
+</div>
+{% endblock %}

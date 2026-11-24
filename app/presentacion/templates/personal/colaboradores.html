@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, paginacion, vacio %}
+{% block titulo %}Colaboradores{% endblock %}
+{% block encabezado %}Colaboradores{% endblock %}
+{% block contenido %}
+<form class="card card-body filtros mb-3" method="get">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-2"><label class="form-label">Área</label><select class="form-select" name="area"><option value="">Todas</option>
+      {% for a in areas %}<option value="{{ a.id_area }}" {{ 'selected' if request.args.area == a.id_area|string }}>{{ a.nombre }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><label class="form-label">Cargo</label><select class="form-select" name="cargo"><option value="">Todos</option>
+      {% for c in cargos %}<option value="{{ c.id_cargo }}" {{ 'selected' if request.args.cargo == c.id_cargo|string }}>{{ c.nombre }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><label class="form-label">Estado</label><select class="form-select" name="estado">
+      {% for v, t in [('ACTIVO','Activo'),('CESADO','Cesado'),('','Todos')] %}<option value="{{ v }}" {{ 'selected' if request.args.get('estado','ACTIVO') == v }}>{{ t }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><label class="form-label">Buscar</label><input class="form-control" name="q" placeholder="DNI o nombre" value="{{ request.args.q or '' }}"></div>
+    <div class="col-md-1 d-grid"><button class="btn btn-outline-primary">Filtrar</button></div>
+    <div class="col-md-2 d-grid"><a class="btn btn-primary" href="{{ url_for('personal.colaborador_form') }}"><i class="bi bi-person-plus"></i> Nuevo</a></div>
+  </div>
+</form>
+<div class="card">
+  <div class="table-responsive"><table class="table table-hover align-middle">
+    <thead><tr><th>DNI</th><th>Apellidos y nombres</th><th>Área</th><th>Cargo</th><th>Cód. biométrico</th><th>Ingreso</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+    <tbody>
+    {% for c in pag.items %}
+      <tr><td>{{ c.dni }}</td><td class="fw-semibold">{{ c.nombre_completo }}</td><td>{{ c.area.nombre }}</td><td>{{ c.cargo.nombre }}</td>
+        <td><code>{{ c.codigo_biometrico }}</code></td><td>{{ c.fecha_ingreso|f }}</td><td>{{ badge(c.estado) }}</td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('personal.colaborador_form', id_colaborador=c.id_colaborador) }}"><i class="bi bi-pencil"></i> Editar</a>
+          {% if c.estado == 'ACTIVO' %}
+          <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#baja{{ c.id_colaborador }}">Dar de baja</button>
+          <div class="modal fade" id="baja{{ c.id_colaborador }}" tabindex="-1"><div class="modal-dialog"><form class="modal-content text-start" method="post"
+               action="{{ url_for('personal.baja', id_colaborador=c.id_colaborador) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="modal-header"><h5 class="modal-title">Dar de baja a {{ c.nombre_completo }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><label class="form-label">Fecha de cese</label><input class="form-control mb-2" type="date" name="fecha_cese" required>
+              <label class="form-label">Motivo</label><input class="form-control" name="motivo" required>
+              <small class="text-muted">El historial de asistencia se conserva.</small></div>
+            <div class="modal-footer"><button class="btn btn-danger">Confirmar baja</button></div>
+          </form></div></div>
+          {% endif %}</td></tr>
+    {% else %}<tr><td colspan="8">{{ vacio('No hay colaboradores con esos filtros.') }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  <div class="card-body pt-0">{{ paginacion(pag, 'personal.colaboradores') }}</div>
+</div>
+{% endblock %}

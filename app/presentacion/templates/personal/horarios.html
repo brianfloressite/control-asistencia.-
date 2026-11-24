@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block titulo %}Horarios y turnos{% endblock %}
+{% block encabezado %}Horarios y turnos de guardia{% endblock %}
+{% block contenido %}
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="card mb-3"><div class="card-header">Horarios registrados</div>
+      <div class="table-responsive"><table class="table align-middle">
+        <thead><tr><th>Nombre</th><th>Entrada</th><th>Salida</th><th>Tolerancia</th><th>Guardia 24 h</th></tr></thead>
+        <tbody>{% for h in horarios %}<tr><td class="fw-semibold">{{ h.nombre }}</td><td>{{ h.hora_entrada.strftime('%H:%M') }}</td>
+          <td>{{ h.hora_salida.strftime('%H:%M') }}{{ ' (+1 día)' if h.es_guardia_24h }}</td><td>{{ h.tolerancia_min }} min</td>
+          <td>{{ 'Sí' if h.es_guardia_24h else 'No' }}</td></tr>{% endfor %}</tbody></table></div>
+      <div class="card-body border-top"><form method="post" class="row g-2 align-items-end">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="accion" value="horario">
+        <div class="col-md-3"><label class="form-label small">Nombre</label><input class="form-control" name="nombre" required></div>
+        <div class="col-md-2"><label class="form-label small">Entrada</label><input class="form-control" type="time" name="hora_entrada" required></div>
+        <div class="col-md-2"><label class="form-label small">Salida</label><input class="form-control" type="time" name="hora_salida" required></div>
+        <div class="col-md-2"><label class="form-label small">Tolerancia (min)</label><input class="form-control" type="number" min="0" max="60" name="tolerancia_min" value="10"></div>
+        <div class="col-md-1"><div class="form-check"><input class="form-check-input" type="checkbox" name="es_guardia_24h" id="g24"><label class="form-check-label small" for="g24">24 h</label></div></div>
+        <div class="col-md-2 d-grid"><button class="btn btn-outline-primary"><i class="bi bi-plus-lg"></i> Horario</button></div>
+      </form></div></div>
+    <div class="card"><div class="card-header">Asignaciones de turnos</div>
+      <div class="table-responsive" style="max-height: 420px"><table class="table table-sm align-middle">
+        <thead><tr><th>Colaborador</th><th>Horario</th><th>Desde</th><th>Hasta</th></tr></thead>
+        <tbody>{% for t in asignaciones %}<tr><td>{{ t.colaborador.nombre_completo }}</td><td>{{ t.horario.nombre }}</td><td>{{ t.fecha_inicio|f }}</td><td>{{ t.fecha_fin|f }}</td></tr>{% endfor %}</tbody>
+      </table></div></div>
+  </div>
+  <div class="col-xl-4">
+    <div class="card"><div class="card-header">Asignar turno</div><div class="card-body">
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="accion" value="asignar">
+        <div class="mb-2"><label class="form-label">Colaborador</label><select class="form-select" name="id_colaborador" required>
+          {% for c in colaboradores %}<option value="{{ c.id_colaborador }}">{{ c.nombre_completo }}</option>{% endfor %}</select></div>
+        <div class="mb-2"><label class="form-label">Horario</label><select class="form-select" name="id_horario" required>
+          {% for h in horarios %}<option value="{{ h.id_horario }}">{{ h.nombre }}</option>{% endfor %}</select></div>
+        <div class="mb-2"><label class="form-label">Desde</label><input class="form-control" type="date" name="fecha_inicio" value="{{ hoy }}" required></div>
+        <div class="mb-3"><label class="form-label">Hasta</label><input class="form-control" type="date" name="fecha_fin" required></div>
+        <button class="btn btn-primary w-100">Guardar asignación</button>
+        <p class="small text-muted mt-2 mb-0">El sistema valida que no existan cruces de turnos para el colaborador.</p>
+      </form></div></div>
+  </div>
+</div>
+{% endblock %}

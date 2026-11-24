@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block titulo %}Reglas de negocio{% endblock %}
+{% block encabezado %}Reglas de incentivos y sanciones{% endblock %}
+{% block contenido %}
+<div class="row g-3">
+  <div class="col-xl-7"><div class="card"><div class="card-header">Parámetros {{ 'vigentes' if regla else '(sin configurar)' }}</div><div class="card-body">
+    <form method="post" class="row g-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="col-md-6"><label class="form-label">Minutos de tolerancia</label><input class="form-control" type="number" min="0" name="tolerancia_min" value="{{ regla.tolerancia_min if regla else 10 }}" required></div>
+      <div class="col-md-6"><label class="form-label">Monto del bono de puntualidad (S/)</label><input class="form-control" type="number" step="0.01" min="0.01" name="monto_bono" value="{{ regla.monto_bono if regla else '150.00' }}" required></div>
+      <div class="col-md-6"><label class="form-label">Máx. tardanzas para acceder al bono</label><input class="form-control" type="number" min="0" name="max_tardanzas_bono" value="{{ regla.max_tardanzas_bono if regla else 0 }}" required></div>
+      <div class="col-md-6"><label class="form-label">Tardanzas que generan alerta</label><input class="form-control" type="number" min="1" name="tardanzas_alerta" value="{{ regla.tardanzas_alerta if regla else 3 }}" required></div>
+      <div class="col-md-6"><label class="form-label">Faltas que generan alerta</label><input class="form-control" type="number" min="1" name="faltas_alerta" value="{{ regla.faltas_alerta if regla else 2 }}" required></div>
+      <div class="col-md-6"><label class="form-label">Vigente desde</label><input class="form-control" type="date" name="vigencia_desde" value="{{ hoy }}" required></div>
+      <div class="col-12"><div class="alert alert-light border small mb-0"><i class="bi bi-info-circle"></i> Al guardar se crea una nueva versión y la anterior queda en el historial.</div></div>
+      <div class="col-12"><button class="btn btn-primary">Guardar nueva versión</button></div>
+    </form></div></div></div>
+  <div class="col-xl-5"><div class="card"><div class="card-header">Historial de versiones</div>
+    <div class="table-responsive"><table class="table table-sm align-middle">
+      <thead><tr><th>Vigencia</th><th>Bono</th><th>Tolerancia</th><th>Alertas</th><th>Estado</th></tr></thead>
+      <tbody>{% for r in historial %}<tr><td>{{ r.vigencia_desde|f }}</td><td>{{ r.monto_bono|soles }}</td><td>{{ r.tolerancia_min }} min</td>
+        <td class="small">{{ r.tardanzas_alerta }} tard. / {{ r.faltas_alerta }} faltas</td><td>{{ badge('ACTIVA' if r.vigente else 'CERRADA')|replace('Activa','Vigente') }}</td></tr>{% endfor %}</tbody>
+    </table></div></div></div>
+</div>
+{% endblock %}
